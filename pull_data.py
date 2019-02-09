@@ -14,6 +14,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select 
 
 from bs4 import BeautifulSoup 
+import re 
 
 os.chdir("C:\\Users\\adwar\\Documents\\vassar_soccer")
 
@@ -100,4 +101,26 @@ game_day_data = games.get_data()
 game_day_data.index = range(0, len(game_day_data))
 games.quit()
             
+
+df = game_day_data[pd.notnull(game_day_data['VCMS - Play Description'])]
+
+def subsets(df, word):
+    search_idx = []
+    for idx, val in enumerate(df['VCMS - Play Description']):
+        try:
+            if re.search(word, val).group() == word:
+                search_idx.append(idx)
+                
+        except: 
+            pass
+    subset = df.iloc[search_idx]
+    subset['Clock'] = [int(i.split(":")[0]) + 1 for i in subset['Clock']]
+
+    return(subset)
     
+
+
+(subsets(df, 'GOAL'))
+
+
+   
