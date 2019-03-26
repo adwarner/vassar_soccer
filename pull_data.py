@@ -101,7 +101,6 @@ game_day_data = games.get_data()
 game_day_data.index = range(0, len(game_day_data))
 games.quit()
             
-
 df = game_day_data[pd.notnull(game_day_data['VCMS - Play Description'])]
 
 def subsets(df, word):
@@ -120,7 +119,19 @@ def subsets(df, word):
     
 
 
-(subsets(df, 'GOAL'))
+goals = subsets(df, 'GOAL')
 
+subs = subsets(df, 'substitution')
+into = []
+out = []
+for idx, val in enumerate(subs['VCMS - Play Description']):
+    
+    sub_stats = (val.split(':')[1].strip('.').strip().split('for'))
+    into.append(sub_stats[0])
+    out.append(sub_stats[1])
 
+subs['Sub In'] = into
+subs['Sub Out'] = out
+
+subs.to_csv('subs.csv', index = False)    
    
