@@ -58,6 +58,10 @@ class game_data():
         for i in links: 
             if j ==0: 
                 self.driver.get(i)
+                dates_html = self.driver.find_element_by_id('box-score')
+                box_score = dates_html.get_attribute('innerHTML')
+                game_date = re.search(r'(\d+/\d+/\d+)',box_score)[1]
+                
                 elem = self.driver.find_element_by_id('play-by-play-period-1')
                 elem2 = self.driver.find_element_by_id('play-by-play-period-2')
     
@@ -65,13 +69,19 @@ class game_data():
                 second_half = pd.read_html(elem2.get_attribute('innerHTML'))[0]
                 df = pd.concat([first_half, second_half], axis = 0)
                 df = df[[i for i in df.columns if i.find('VC') >= 0 or i == 'Clock' or i.find('VAS') >= 0]]
-                df.columns = ['Clock', 'VCMS - Play Description']
+                df['Date'] = game_date
+                df.columns = ['Clock', 'VCMS - Play Description', 'Date']
                 j += 1
                 
             else: 
                 df1 = pd.DataFrame()
                 
                 self.driver.get(i)
+                
+                dates_html = self.driver.find_element_by_id('box-score')
+                box_score = dates_html.get_attribute('innerHTML')
+                game_date = re.search(r'(\d+/\d+/\d+)',box_score)[1]
+                
                 elem = self.driver.find_element_by_id('play-by-play-period-1')
                 elem2 = self.driver.find_element_by_id('play-by-play-period-2')
     
@@ -80,8 +90,9 @@ class game_data():
                 df1 = pd.concat([first_half, second_half], axis = 0)
             
                 df1 = df1[[i for i in df1.columns if i.find('VC') >= 0 or i == 'Clock' or i.find('VAS') >= 0]]
-                
-                df1.columns = ['Clock', 'VCMS - Play Description']
+                df1['Date'] = game_date
+
+                df1.columns = ['Clock', 'VCMS - Play Description', 'Date']
 
                 df = pd.concat([df, df1], axis = 0)
                 j += 1
