@@ -15,6 +15,7 @@ from selenium.webdriver.support.ui import Select
 
 from bs4 import BeautifulSoup 
 import re 
+import numpy as np 
 
 os.chdir("C:\\Users\\adwar\\Documents\\vassar_soccer")
 
@@ -111,11 +112,14 @@ games = game_data(gameday_links)
 game_day_data = games.get_data() 
 game_day_data.index = range(0, len(game_day_data))
 games.quit()
+
+
             
 df = game_day_data[pd.notnull(game_day_data['VCMS - Play Description'])]
 
 def subsets(df, word):
     search_idx = []
+    
     for idx, val in enumerate(df['VCMS - Play Description']):
         try:
             if re.search(word, val).group() == word:
@@ -143,6 +147,76 @@ for idx, val in enumerate(subs['VCMS - Play Description']):
 
 subs['Sub In'] = into
 subs['Sub Out'] = out
+
+
+
+
+class starters(): 
+    
+    def __init__(self, links):
+        self.links = links
+        self.driver = webdriver.Chrome("chromedriver")
+        
+    def get_starters(self):
+        links = ['https://www.vassarathletics.com/' + i for i in self.links]
+        
+        #df = pd.DataFrame()
+        
+        for idx, val in enumerate(links):
+            self.driver.get(val)
+            
+            starters = self.driver.find_element_by_id('individual-stats')
+            side = self.driver.find_element_by_class_name('box-score-header')
+            side = pd.read_html(side.get_attribute('innerHTML'))[0]
+            try: 
+                vassar_index = [idx for idx, val in enumerate(side['Team']) if val.strip().lower().find('vas') >= 0][0]
+            except: 
+                vassar_index = [idx for idx, val in enumerate(side['Team']) if val.strip().lower().find('vcms') >= 0][0]
+
+            if vassar_index == 1: 
+                vassar_index = 2
+            else: 
+                pass
+            starters = starters.get_attribute('innerHTML')
+            
+            
+            if idx == 0: 
+                df = pd.read_html(starters)[vassar_index]
+            else: 
+                df1 = pd.read_html(starters)[vassar_index]
+                df = pd.concat([df, df1])
+        return(df, vassar_index)
+    
+    def quit(self):
+        self.driver.quit()
+        
+starters_test = starters(gameday_links)     
+starters_df = starters_test.get_starters()[0]
+starters_df['subset_index'] = starters_df.index 
+starters_test.quit()
+
+starters_df_test = starters_df[starters_df['subset_index'] <= 12]
+
+## We need to clean out the player name ### 
+
+regex = re.compile('[^a-zA-Z ]')
+starters_df_test['Player'] = [regex.sub('', str(i)) for i in starters_df_test['Player']]
+starters_df_test['Player'] = starters_df_test['Player'].apply(lambda x: x.strip())
+
+def clean_player_name(df):
+    try: 
+        return df['Player'].split('  ')[0]
+    except:
+        return df['Player']
+    
+starters_df_test['Player'] = starters_df_test.apply(clean_player_name, axis = 1)
+
+starters_df_test.reset_index(inplace = True)
+starters_df_test = starters_df.drop(['index'], axis = 1)
+
+starters_df_test  = starters_df_test[starters_df_test['Player'] != 'nan']       
+starters_df_test['Date'] = list(np.repeat(list(df['Date'].unique()), 11)) 
+starters_df_test = starters_df_test[['Player', 'Date']]   
 
 subs.to_csv('subs.csv', index = False)    
    
