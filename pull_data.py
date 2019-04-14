@@ -113,9 +113,7 @@ game_day_data = games.get_data()
 game_day_data.index = range(0, len(game_day_data))
 games.quit()
 
-
             
-df = game_day_data[pd.notnull(game_day_data['VCMS - Play Description'])]
 
 def subsets(df, word):
     search_idx = []
@@ -132,24 +130,6 @@ def subsets(df, word):
 
     return(subset)
     
-
-
-goals = subsets(df, 'GOAL')
-
-subs = subsets(df, 'substitution')
-into = []
-out = []
-for idx, val in enumerate(subs['VCMS - Play Description']):
-    
-    sub_stats = (val.split(':')[1].strip('.').strip().split('for'))
-    into.append(sub_stats[0])
-    out.append(sub_stats[1])
-
-subs['Sub In'] = into
-subs['Sub Out'] = out
-
-
-
 
 class starters(): 
     
@@ -212,11 +192,31 @@ def clean_player_name(df):
 starters_df_test['Player'] = starters_df_test.apply(clean_player_name, axis = 1)
 
 starters_df_test.reset_index(inplace = True)
-starters_df_test = starters_df.drop(['index'], axis = 1)
+starters_df_test = starters_df_test.drop(['index'], axis = 1)
 
 starters_df_test  = starters_df_test[starters_df_test['Player'] != 'nan']       
 starters_df_test['Date'] = list(np.repeat(list(df['Date'].unique()), 11)) 
 starters_df_test = starters_df_test[['Player', 'Date']]   
+starters_df_test['Clock'] = '00:00'
 
-subs.to_csv('subs.csv', index = False)    
+
+df = game_day_data[pd.notnull(game_day_data['VCMS - Play Description'])]
+
+
+goals = subsets(df, 'GOAL')
+
+subs = subsets(df, 'substitution')
+into = []
+out = []
+for idx, val in enumerate(subs['VCMS - Play Description']):
+    
+    sub_stats = (val.split(':')[1].strip('.').strip().split('for'))
+    into.append(sub_stats[0])
+    out.append(sub_stats[1])
+
+subs['Sub In'] = into
+subs['Sub Out'] = out
+
+
+#subs.to_csv('subs.csv', index = False)    
    
